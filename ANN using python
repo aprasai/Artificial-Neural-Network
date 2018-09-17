@@ -1,0 +1,65 @@
+#Artificial Neural Networks using python
+#Importing necessary libraries
+%config IPcompleter.greedy = True
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import keras
+import theano
+import tensorflow as tf
+
+#importing the dataset
+dataset = pd.read_csv('ABC.csv')
+dataset = pd.get_dummies(dataset,columns = ['A','B'] )
+x = dataset[['X_1','X_2','X_3', 'X_4','X_5']]
+y = dataset[['Y']]
+
+#Splitting into training and test set
+from sklearn.model_selection import train_test_split
+x_train, x_test, y_train, y_test = train_test_split(x,y,test_size = .2, random_state = 0)
+
+#Standardizing the variables
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+x_train =sc.fit_transform(x_train)
+x_test = sc.transform(x_test)
+
+#Artificial Neural Network Modeling
+from keras.models import Sequential
+from keras.layers import Dense
+
+#initializing the ANN
+classifier = Sequential()
+#adding input layer and first hidden layer
+classifier.add(Dense(units=3, kernel_initializer= 'uniform', activation = 'relu', input_dim = 5)) #input_dim = number of input layers
+#'relu' = rectifier activation function 
+
+#adding second hidden layer
+classifier.add(Dense(units=3, kernel_initializer= 'uniform', activation = 'relu')) #since input_dim has already been specified before
+
+#Adding output layer
+classifier.add(Dense(units=1, kernel_initializer= 'uniform', activation = 'sigmoid'))#units = number of output layers
+#if more than one, cannot use sigmoid and will have to use  softmax
+
+#Compiling the ANN
+classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics =['accuracy'])
+
+
+#Making the predictions
+%%time
+classifier.fit(x_train, y_train, batch_size = 10, epochs = 100)
+#Predicting the outcomes
+y_pred = classifier.predict(x_test) #this will give the probabilities
+y_pred_binary = (y_pred>.5) #converts the probabilities to binary assuming a 50% threshold
+
+#Confusion Matrix and accuracy
+from sklearn.metrics import confusion_matrix
+cm = pd.DataFrame(confusion_matrix(y_test, y_pred_binary))
+print(cm)
+print ()
+
+accuracy = (cm.iloc[0,0]+cm.iloc[1,1])/(cm.sum()).sum()
+print (accuracy)
+
+
+
